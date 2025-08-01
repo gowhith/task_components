@@ -1,0 +1,88 @@
+<!-- health-status.html -->
+<!--
+  Tooltip Health Status Component
+  Hover over the dot to see details.
+  Usage:
+  <health-status-element></health-status-element>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Health Status Tooltip</title>
+  <script type="module">
+    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+
+    class HealthStatusElement extends LitElement {
+      static properties = {
+        status: { type: Object }
+      };
+
+      static styles = css`
+        .dot {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          margin-right: 8px;
+          position: relative;
+        }
+
+        .dot.online { background: green; }
+        .dot.offline { background: red; }
+        .dot.warning { background: orange; }
+
+        .tooltip {
+          visibility: hidden;
+          background-color: #333;
+          color: #fff;
+          text-align: left;
+          border-radius: 5px;
+          padding: 6px;
+          position: absolute;
+          z-index: 1;
+          top: 20px;
+          left: 0;
+          font-size: 12px;
+          white-space: pre-line;
+        }
+
+        .dot:hover .tooltip {
+          visibility: visible;
+        }
+      `;
+
+      constructor() {
+        super();
+        this.status = {
+          status: 'online',
+          lastChecked: '2025-07-27T10:00:00Z',
+          error: null
+        };
+      }
+
+      render() {
+        const statusColor = this.status.status || 'offline';
+        const { lastChecked, error } = this.status;
+
+        return html`
+          <div class="dot ${statusColor}">
+            <div class="tooltip">
+              Status: ${this.status.status}\n
+              Last Checked: ${new Date(lastChecked).toLocaleString()}\n
+              ${error ? `Error: ${error}` : ''}
+            </div>
+          </div>
+          <span>${this.status.status.toUpperCase()}</span>
+        `;
+      }
+    }
+
+    customElements.define('health-status-element', HealthStatusElement);
+  </script>
+</head>
+<body>
+  <health-status-element></health-status-element>
+</body>
+</html>

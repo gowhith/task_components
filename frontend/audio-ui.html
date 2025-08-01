@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Web Audio Stream UI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding-top: 60px;
+    }
+  </style>
+
+  <script type="module">
+    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+
+    class WebAudioStreamElement extends LitElement {
+      static properties = {
+        isPlaying: { type: Boolean },
+        isMuted: { type: Boolean },
+        volume: { type: Number }
+      };
+
+      constructor() {
+        super();
+        this.isPlaying = false;
+        this.isMuted = false;
+        this.volume = 50;
+      }
+
+      static styles = css`
+        :host {
+          display: block;
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          max-width: 400px;
+          width: 100%;
+          text-align: center;
+        }
+
+        button {
+          padding: 10px;
+          font-size: 16px;
+          margin: 0 8px;
+          background: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+
+        input[type="range"] {
+          width: 80%;
+          margin-top: 12px;
+        }
+
+        .status {
+          font-size: 14px;
+          color: #555;
+          margin-top: 10px;
+        }
+      `;
+
+      render() {
+        return html`
+          <h3>🎛 Web Audio UI</h3>
+          <div>
+            <button @click=${this._togglePlay}>
+              ${this.isPlaying ? '⏸ Pause' : '▶️ Play'}
+            </button>
+
+            <button @click=${this._toggleMute}>
+              ${this.isMuted ? '🔇 Unmute' : '🔊 Mute'}
+            </button>
+          </div>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            .value=${this.volume}
+            @input=${this._changeVolume}
+            ?disabled=${this.isMuted}
+          />
+
+          <div class="status">
+            ${this.isPlaying ? '▶️ Playing' : '⏸ Paused'} |
+            Volume: ${this.volume} ${this.isMuted ? '(Muted)' : ''}
+          </div>
+        `;
+      }
+
+      _togglePlay() {
+        this.isPlaying = !this.isPlaying;
+        console.log('🎬 Play toggled:', this.isPlaying);
+      }
+
+      _toggleMute() {
+        this.isMuted = !this.isMuted;
+        this.volume = this.isMuted ? 0 : 50;
+
+        this.dispatchEvent(new CustomEvent('mute-toggled', {
+          detail: { muted: this.isMuted },
+          bubbles: true,
+          composed: true
+        }));
+      }
+
+      _changeVolume(e) {
+        const val = parseInt(e.target.value);
+        this.volume = val;
+
+        this.dispatchEvent(new CustomEvent('volume-changed', {
+          detail: { volume: this.volume },
+          bubbles: true,
+          composed: true
+        }));
+      }
+    }
+
+    customElements.define('web-audio-stream-element', WebAudioStreamElement);
+  </script>
+</head>
+<body>
+  <web-audio-stream-element></web-audio-stream-element>
+</body>
+</html>

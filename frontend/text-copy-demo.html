@@ -1,0 +1,145 @@
+<!-- text-copy-demo.html -->
+<!--
+  ✅ Task 5: Cross-Component Text Copy
+  - Select text from `text-source-element`
+  - Click "Copy Selected"
+  - `text-display-element` listens and appends it
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Text Copy Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef0f3;
+      display: flex;
+      gap: 30px;
+      padding: 60px;
+      justify-content: center;
+    }
+  </style>
+  <script type="module">
+    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+
+    // ✅ Source component
+    class TextSourceElement extends LitElement {
+      static styles = css`
+        .wrapper {
+          background: white;
+          padding: 16px;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          width: 300px;
+        }
+
+        button {
+          margin-top: 10px;
+          padding: 6px 12px;
+          background: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        p {
+          user-select: text;
+          cursor: text;
+        }
+      `;
+
+      render() {
+        return html`
+          <div class="wrapper">
+            <h3>📄 Text Source</h3>
+            <p id="text">
+              Select any part of this paragraph and click "Copy Selected".
+              This demonstrates CustomEvent dispatch with selected text.
+            </p>
+            <button @click=${this._copySelected}>Copy Selected</button>
+          </div>
+        `;
+      }
+
+      _copySelected() {
+        const selection = window.getSelection();
+        const selectedText = selection ? selection.toString() : '';
+        if (selectedText.trim()) {
+          const event = new CustomEvent('text-copied', {
+            detail: selectedText,
+            bubbles: true,
+            composed: true,
+          });
+          this.dispatchEvent(event);
+        } else {
+          alert("Please select text before copying.");
+        }
+      }
+    }
+
+    customElements.define('text-source-element', TextSourceElement);
+
+
+    // ✅ Display component
+    class TextDisplayElement extends LitElement {
+      static styles = css`
+        .wrapper {
+          background: white;
+          padding: 16px;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          width: 300px;
+          min-height: 150px;
+        }
+
+        pre {
+          white-space: pre-wrap;
+          font-size: 14px;
+          color: #333;
+        }
+      `;
+
+      constructor() {
+        super();
+        this.collectedText = '';
+        this._handleCopy = this._handleCopy.bind(this);
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        window.addEventListener('text-copied', this._handleCopy);
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        window.removeEventListener('text-copied', this._handleCopy);
+      }
+
+      _handleCopy(e) {
+        const newText = e.detail;
+        this.collectedText += (this.collectedText ? '\n' : '') + newText;
+        this.requestUpdate();
+        console.log("📥 Received text:", newText);
+      }
+
+      render() {
+        return html`
+          <div class="wrapper">
+            <h3>📥 Text Display</h3>
+            <pre>${this.collectedText}</pre>
+          </div>
+        `;
+      }
+    }
+
+    customElements.define('text-display-element', TextDisplayElement);
+  </script>
+</head>
+<body>
+  <text-source-element></text-source-element>
+  <text-display-element></text-display-element>
+</body>
+</html>

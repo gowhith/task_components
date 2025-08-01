@@ -1,0 +1,86 @@
+<!-- audio-mixer.html -->
+<!--
+  Audio Mixer Component
+  Allows drag-and-drop reordering of audio clips.
+  Test: Open in browser, drag items to reorder.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Audio Mixer</title>
+  <script type="module">
+    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+
+    class AudioMixerElement extends LitElement {
+      static properties = {
+        clips: { state: true },
+        dragIndex: { state: true }
+      };
+
+      static styles = css`
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+        li {
+          padding: 10px;
+          margin: 5px 0;
+          background: #f0f0f0;
+          border: 1px solid #ccc;
+          cursor: grab;
+        }
+        li.dragging {
+          opacity: 0.5;
+        }
+      `;
+
+      constructor() {
+        super();
+        this.clips = ['Clip 1', 'Clip 2', 'Clip 3'];
+        this.dragIndex = null;
+      }
+
+      render() {
+        return html`
+          <h2>🎧 Audio Mixer</h2>
+          <ul>
+            ${this.clips.map((clip, index) => html`
+              <li
+                draggable="true"
+                @dragstart=${(e) => this._onDragStart(e, index)}
+                @dragover=${this._onDragOver}
+                @drop=${(e) => this._onDrop(e, index)}
+              >${clip}</li>
+            `)}
+          </ul>
+        `;
+      }
+
+      _onDragStart(e, index) {
+        this.dragIndex = index;
+        e.dataTransfer.effectAllowed = 'move';
+      }
+
+      _onDragOver(e) {
+        e.preventDefault(); // Allow drop
+      }
+
+      _onDrop(e, targetIndex) {
+        const fromIndex = this.dragIndex;
+        if (fromIndex === targetIndex) return;
+
+        const newClips = [...this.clips];
+        const [moved] = newClips.splice(fromIndex, 1);
+        newClips.splice(targetIndex, 0, moved);
+        this.clips = newClips;
+      }
+    }
+
+    customElements.define('audio-mixer-element', AudioMixerElement);
+  </script>
+</head>
+<body>
+  <audio-mixer-element></audio-mixer-element>
+</body>
+</html>
