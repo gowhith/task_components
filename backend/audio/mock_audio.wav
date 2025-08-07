@@ -1,0 +1,5 @@
+use std::io::Write; // add this at the top
+
+// Create a fake audio file with 1 KB of dummy data
+let mut mock_file = std::fs::File::create("mock_audio.wav")?;
+mock_file.write_all(&vec![0u8; 1024])?;

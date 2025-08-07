@@ -1,84 +1,127 @@
-<!-- audio-mixer.html -->
-<!--
-  Audio Mixer Component
-  Allows drag-and-drop reordering of audio clips.
-  Test: Open in browser, drag items to reorder.
--->
+<!-- audio-mixer-element.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Audio Mixer</title>
+  <title>Audio Mixer - Clip Reordering</title>
   <script type="module">
-    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+    import { LitElement, html, css } from 'https://unpkg.com/lit@2.5.0/index.js?module';
 
-    class AudioMixerElement extends LitElement {
+    // Child component: Individual Clip Item
+    class ClipItem extends LitElement {
       static properties = {
-        clips: { state: true },
-        dragIndex: { state: true }
+        name: { type: String },
+        index: { type: Number }
       };
 
       static styles = css`
-        ul {
-          list-style: none;
-          padding: 0;
-        }
-        li {
+        div {
           padding: 10px;
-          margin: 5px 0;
-          background: #f0f0f0;
           border: 1px solid #ccc;
-          cursor: grab;
+          margin-bottom: 5px;
+          background-color: white;
+          cursor: move;
         }
-        li.dragging {
+        .dragging {
           opacity: 0.5;
         }
       `;
 
-      constructor() {
-        super();
-        this.clips = ['Clip 1', 'Clip 2', 'Clip 3'];
-        this.dragIndex = null;
-      }
-
       render() {
         return html`
-          <h2>🎧 Audio Mixer</h2>
-          <ul>
-            ${this.clips.map((clip, index) => html`
-              <li
-                draggable="true"
-                @dragstart=${(e) => this._onDragStart(e, index)}
-                @dragover=${this._onDragOver}
-                @drop=${(e) => this._onDrop(e, index)}
-              >${clip}</li>
-            `)}
-          </ul>
+          <div 
+            draggable="true" 
+            @dragstart=${this._onDragStart} 
+            @dragend=${this._onDragEnd}>
+            ${this.name}
+          </div>
         `;
       }
 
-      _onDragStart(e, index) {
-        this.dragIndex = index;
-        e.dataTransfer.effectAllowed = 'move';
+      _onDragStart(e) {
+        e.dataTransfer.setData('text/plain', this.index);
+        this.shadowRoot.querySelector('div').classList.add('dragging');
+      }
+
+      _onDragEnd() {
+        this.shadowRoot.querySelector('div').classList.remove('dragging');
+      }
+    }
+
+    customElements.define('clip-item', ClipItem);
+
+    // Parent component: Audio Mixer Element
+    class AudioMixerElement extends LitElement {
+      static properties = {
+        clips: { state: true }
+      };
+
+      constructor() {
+        super();
+        this.clips = ['Clip 1', 'Clip 2', 'Clip 3'];
+      }
+
+      static styles = css`
+        .drop-zone {
+          border: 2px dashed #aaa;
+          padding: 10px;
+          min-height: 100px;
+          background: #f9f9f9;
+        }
+        .highlight {
+          background-color: #eef;
+        }
+      `;
+
+      render() {
+        return html`
+          <h3>Audio Mixer</h3>
+          <div 
+            class="drop-zone" 
+            @dragover=${this._onDragOver} 
+            @drop=${this._onDrop}
+            @dragleave=${this._onDragLeave}>
+            ${this.clips.map((clip, index) => html`
+              <clip-item name=${clip} .index=${index}></clip-item>
+            `)}
+          </div>
+        `;
       }
 
       _onDragOver(e) {
-        e.preventDefault(); // Allow drop
+        e.preventDefault();
+        this.shadowRoot.querySelector('.drop-zone').classList.add('highlight');
       }
 
-      _onDrop(e, targetIndex) {
-        const fromIndex = this.dragIndex;
-        if (fromIndex === targetIndex) return;
+      _onDrop(e) {
+        e.preventDefault();
+        const draggedIndex = Number(e.dataTransfer.getData('text/plain'));
+        const dropTarget = e.target.closest('clip-item');
+        const dropIndex = dropTarget ? Number(dropTarget.index) : this.clips.length - 1;
 
-        const newClips = [...this.clips];
-        const [moved] = newClips.splice(fromIndex, 1);
-        newClips.splice(targetIndex, 0, moved);
-        this.clips = newClips;
+        if (!isNaN(draggedIndex) && draggedIndex !== dropIndex) {
+          const newClips = [...this.clips];
+          const [movedClip] = newClips.splice(draggedIndex, 1);
+          newClips.splice(dropIndex, 0, movedClip);
+          this.clips = newClips;
+        }
+        this.shadowRoot.querySelector('.drop-zone').classList.remove('highlight');
+      }
+
+      _onDragLeave() {
+        this.shadowRoot.querySelector('.drop-zone').classList.remove('highlight');
       }
     }
 
     customElements.define('audio-mixer-element', AudioMixerElement);
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
   <audio-mixer-element></audio-mixer-element>

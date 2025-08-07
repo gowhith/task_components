@@ -1,88 +1,151 @@
-<!-- health-status.html -->
-<!--
-  Tooltip Health Status Component
-  Hover over the dot to see details.
-  Usage:
-  <health-status-element></health-status-element>
--->
-
+<!-- status-display.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Health Status Tooltip</title>
+  <meta charset="UTF-8" />
+  <title>Status Display Component</title>
   <script type="module">
-    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+    import { LitElement, html, css } from 'https://unpkg.com/lit@2.5.0/index.js?module';
 
-    class HealthStatusElement extends LitElement {
+    // Tooltip Component
+    class StatusTooltip extends LitElement {
       static properties = {
-        status: { type: Object }
+        text: { type: String },
+        visible: { type: Boolean, reflect: true }
       };
 
+      constructor() {
+        super();
+        this.text = '';
+        this.visible = false;
+      }
+
       static styles = css`
-        .dot {
-          display: inline-block;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          margin-right: 8px;
+        :host {
           position: relative;
+          display: inline-block;
         }
-
-        .dot.online { background: green; }
-        .dot.offline { background: red; }
-        .dot.warning { background: orange; }
-
         .tooltip {
           visibility: hidden;
           background-color: #333;
           color: #fff;
           text-align: left;
-          border-radius: 5px;
-          padding: 6px;
-          position: absolute;
-          z-index: 1;
-          top: 20px;
-          left: 0;
-          font-size: 12px;
+          padding: 6px 10px;
+          border-radius: 4px;
+          position: fixed;
+          z-index: 1000;
           white-space: pre-line;
+          opacity: 0;
+          transition: opacity 0.3s;
+          min-width: 180px;
+          max-width: 250px;
+          pointer-events: none;
         }
-
-        .dot:hover .tooltip {
+        :host(:hover) .tooltip {
           visibility: visible;
+          opacity: 1;
         }
       `;
 
-      constructor() {
-        super();
-        this.status = {
-          status: 'online',
-          lastChecked: '2025-07-27T10:00:00Z',
-          error: null
-        };
+      render() {
+        return html`
+          <slot @mousemove=${this._updatePosition}></slot>
+          <div class="tooltip" role="tooltip" id="tooltip">${this.text}</div>
+        `;
       }
 
+      _updatePosition(e) {
+        const tooltip = this.shadowRoot.getElementById('tooltip');
+        const offset = 10;
+        tooltip.style.top = `${e.clientY + offset}px`;
+        tooltip.style.left = `${e.clientX + offset}px`;
+      }
+    }
+
+    customElements.define('status-tooltip', StatusTooltip);
+
+    // Status Indicator Component
+    class StatusIndicator extends LitElement {
+      static properties = {
+        statusData: { type: Object }
+      };
+
+      constructor() {
+        super();
+        this.statusData = { status: 'unknown', lastChecked: '', error: null };
+      }
+
+      static styles = css`
+        .status-dot {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          display: inline-block;
+          margin: 5px;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .online { background-color: green; }
+        .offline { background-color: red; }
+        .degraded { background-color: orange; }
+        .unknown { background-color: gray; }
+        .status-dot:hover {
+          transform: scale(1.2);
+          box-shadow: 0 0 5px rgba(0,0,0,0.4);
+        }
+      `;
+
       render() {
-        const statusColor = this.status.status || 'offline';
-        const { lastChecked, error } = this.status;
+        const { status, lastChecked, error } = this.statusData;
+        const dotClass = ['status-dot', status].join(' ');
+        const lastCheckedText = lastChecked ? `Last Checked: ${lastChecked}` : 'Last Checked: N/A';
+        const errorText = error ? `Error: ${error}` : 'Error: None';
+        const tooltipText = `Status: ${status}\n${lastCheckedText}\n${errorText}`;
 
         return html`
-          <div class="dot ${statusColor}">
-            <div class="tooltip">
-              Status: ${this.status.status}\n
-              Last Checked: ${new Date(lastChecked).toLocaleString()}\n
-              ${error ? `Error: ${error}` : ''}
-            </div>
-          </div>
-          <span>${this.status.status.toUpperCase()}</span>
+          <status-tooltip .text=${tooltipText}>
+            <div class=${dotClass} role="status" aria-label="${status} status"></div>
+          </status-tooltip>
         `;
       }
     }
 
-    customElements.define('health-status-element', HealthStatusElement);
+    customElements.define('status-indicator', StatusIndicator);
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
-  <health-status-element></health-status-element>
+  <h3>Service Health Status</h3>
+
+  <!-- Mock Inputs with JSON parsed directly -->
+  <status-indicator id="status1"></status-indicator>
+  <status-indicator id="status2"></status-indicator>
+  <status-indicator id="status3"></status-indicator>
+
+  <script>
+    document.getElementById('status1').statusData = {
+      status: 'online',
+      lastChecked: '2025-07-27T10:00:00Z',
+      error: null
+    };
+
+    document.getElementById('status2').statusData = {
+      status: 'degraded',
+      lastChecked: '2025-07-27T11:00:00Z',
+      error: 'High latency'
+    };
+
+    document.getElementById('status3').statusData = {
+      status: 'offline',
+      lastChecked: '2025-07-27T12:00:00Z',
+      error: 'Timeout error'
+    };
+  </script>
 </body>
 </html>

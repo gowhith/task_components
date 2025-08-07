@@ -1,42 +1,39 @@
-# simulate_tts.py
-"""
-Simulates a TTS gRPC-like request/response interaction.
-"""
-
-from pydantic import BaseModel
-from typing import Literal
+from pydantic import BaseModel, Field, ValidationError
 
 
-class GenerateSpeechRequest(BaseModel):
-    text: str
-    voice: Literal["male", "female"]
-    language: str
+# ------------------ Pydantic Model ------------------ #
 
-
-class GenerateSpeechResponse(BaseModel):
-    audio: bytes
-    sample_rate: int
-    format: str
-    duration_secs: float
-
-
-def simulate_tts(req: GenerateSpeechRequest) -> GenerateSpeechResponse:
-    return GenerateSpeechResponse(
-        audio=b'\x00\x01\x02\x03',
-        sample_rate=22050,
-        format="wav",
-        duration_secs=2.3
+class SpeechParams(BaseModel):
+    volume_boost: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Optional gain factor (e.g., 1.0 = normal, 2.0 = double volume)"
     )
+
+
+# ------------------ Logic to Use It ------------------ #
+
+def print_speech_params(params: SpeechParams):
+    print("🔊 Received Speech Parameters:")
+    print(f"- Volume Boost: {params.volume_boost}")
+
+
+# ------------------ Demo ------------------ #
+
+def main():
+    try:
+        # ✅ Example 1: Valid input
+        params = SpeechParams(volume_boost=1.5)
+        print_speech_params(params)
+
+        # ❌ Example 2: Invalid input (negative volume)
+        invalid = SpeechParams(volume_boost=-2.0)
+        print_speech_params(invalid)
+
+    except ValidationError as e:
+        print("❌ Validation Error:")
+        print(e.json(indent=2))
 
 
 if __name__ == "__main__":
-    req = GenerateSpeechRequest(
-        text="Welcome to the demo.",
-        voice="female",
-        language="en-US"
-    )
-
-    res = simulate_tts(req)
-
-    print("📤 TTS Request:", req.json())
-    print("📥 TTS Response:", res.dict())
+    main()

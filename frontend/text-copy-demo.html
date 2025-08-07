@@ -1,145 +1,134 @@
-<!-- text-copy-demo.html -->
-<!--
-  ✅ Task 5: Cross-Component Text Copy
-  - Select text from `text-source-element`
-  - Click "Copy Selected"
-  - `text-display-element` listens and appends it
--->
-
+<!-- render-markdown-element.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Text Copy Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #eef0f3;
-      display: flex;
-      gap: 30px;
-      padding: 60px;
-      justify-content: center;
-    }
-  </style>
+  <title>Markdown Renderer Element</title>
   <script type="module">
-    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+    import { LitElement, html, css } from 'https://unpkg.com/lit@2.5.0/index.js?module';
 
-    // ✅ Source component
+    // Simple EventBus for decoupled communication
+    class EventBus {
+      constructor() {
+        this.handlers = {};
+      }
+
+      subscribe(event, callback) {
+        if (!this.handlers[event]) this.handlers[event] = [];
+        this.handlers[event].push(callback);
+      }
+
+      emit(event, detail) {
+        if (this.handlers[event]) {
+          this.handlers[event].forEach(callback => callback(detail));
+        }
+      }
+    }
+
+    const eventBus = new EventBus();
+
+    // Component 1: text-source-element
     class TextSourceElement extends LitElement {
       static styles = css`
-        .wrapper {
-          background: white;
-          padding: 16px;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          width: 300px;
-        }
-
-        button {
+        .copy-btn {
+          display: inline-block;
           margin-top: 10px;
-          padding: 6px 12px;
-          background: #1976d2;
+          padding: 5px 10px;
+          background: #007bff;
           color: white;
           border: none;
-          border-radius: 4px;
           cursor: pointer;
-        }
-
-        p {
-          user-select: text;
-          cursor: text;
-        }
-      `;
-
-      render() {
-        return html`
-          <div class="wrapper">
-            <h3>📄 Text Source</h3>
-            <p id="text">
-              Select any part of this paragraph and click "Copy Selected".
-              This demonstrates CustomEvent dispatch with selected text.
-            </p>
-            <button @click=${this._copySelected}>Copy Selected</button>
-          </div>
-        `;
-      }
-
-      _copySelected() {
-        const selection = window.getSelection();
-        const selectedText = selection ? selection.toString() : '';
-        if (selectedText.trim()) {
-          const event = new CustomEvent('text-copied', {
-            detail: selectedText,
-            bubbles: true,
-            composed: true,
-          });
-          this.dispatchEvent(event);
-        } else {
-          alert("Please select text before copying.");
-        }
-      }
-    }
-
-    customElements.define('text-source-element', TextSourceElement);
-
-
-    // ✅ Display component
-    class TextDisplayElement extends LitElement {
-      static styles = css`
-        .wrapper {
-          background: white;
-          padding: 16px;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          width: 300px;
-          min-height: 150px;
-        }
-
-        pre {
-          white-space: pre-wrap;
-          font-size: 14px;
-          color: #333;
         }
       `;
 
       constructor() {
         super();
-        this.collectedText = '';
-        this._handleCopy = this._handleCopy.bind(this);
-      }
-
-      connectedCallback() {
-        super.connectedCallback();
-        window.addEventListener('text-copied', this._handleCopy);
-      }
-
-      disconnectedCallback() {
-        super.disconnectedCallback();
-        window.removeEventListener('text-copied', this._handleCopy);
-      }
-
-      _handleCopy(e) {
-        const newText = e.detail;
-        this.collectedText += (this.collectedText ? '\n' : '') + newText;
-        this.requestUpdate();
-        console.log("📥 Received text:", newText);
+        this.selectedText = '';
       }
 
       render() {
         return html`
-          <div class="wrapper">
-            <h3>📥 Text Display</h3>
-            <pre>${this.collectedText}</pre>
-          </div>
+          <p @mouseup=${this._handleSelection}>
+            Select any part of this paragraph to copy it to the display area. This text represents sample markdown or any other content that a user might want to extract.
+          </p>
+          ${this.selectedText ? html`<button class="copy-btn" @click=${this._copyText}>Copy Selected</button>` : ''}
+        `;
+      }
+
+      _handleSelection() {
+        const selection = window.getSelection();
+        const text = selection ? selection.toString().trim() : '';
+        this.selectedText = text;
+        this.requestUpdate();
+      }
+
+      _copyText() {
+        eventBus.emit('text-copied', this.selectedText);
+        this.selectedText = '';
+        this.requestUpdate();
+      }
+    }
+
+    customElements.define('text-source-element', TextSourceElement);
+
+    // Component 2: text-display-element
+    class TextDisplayElement extends LitElement {
+      static properties = {
+        content: { type: String, state: true }
+      };
+
+      constructor() {
+        super();
+        this.content = '';
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        eventBus.subscribe('text-copied', (text) => {
+          this.content += (this.content ? '\n' : '') + text;
+        });
+      }
+
+      static styles = css`
+        textarea {
+          width: 100%;
+          height: 150px;
+          font-family: monospace;
+        }
+      `;
+
+      render() {
+        return html`
+          <label>Copied Text:</label>
+          <textarea readonly .value=${this.content}></textarea>
         `;
       }
     }
 
     customElements.define('text-display-element', TextDisplayElement);
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      display: flex;
+      gap: 40px;
+    }
+    .container {
+      width: 45%;
+    }
+  </style>
 </head>
 <body>
-  <text-source-element></text-source-element>
-  <text-display-element></text-display-element>
+  <div class="container">
+    <h3>Text Source</h3>
+    <text-source-element></text-source-element>
+  </div>
+
+  <div class="container">
+    <h3>Text Display</h3>
+    <text-display-element></text-display-element>
+  </div>
 </body>
 </html>

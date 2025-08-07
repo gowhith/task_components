@@ -1,26 +1,17 @@
+<!-- web-audio-stream-element.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Web Audio Stream UI</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      padding-top: 60px;
-    }
-  </style>
-
+  <title>Web Audio Stream Element</title>
   <script type="module">
-    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+    import { LitElement, html, css } from 'https://unpkg.com/lit@2.5.0/index.js?module';
 
     class WebAudioStreamElement extends LitElement {
       static properties = {
-        isPlaying: { type: Boolean },
-        isMuted: { type: Boolean },
-        volume: { type: Number }
+        isPlaying: { type: Boolean, state: true },
+        isMuted: { type: Boolean, state: true },
+        volume: { type: Number, state: true }
       };
 
       constructor() {
@@ -31,89 +22,63 @@
       }
 
       static styles = css`
-        :host {
-          display: block;
-          background: white;
-          padding: 20px;
-          border-radius: 12px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-          max-width: 400px;
-          width: 100%;
-          text-align: center;
+        .player {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
-
         button {
-          padding: 10px;
-          font-size: 16px;
-          margin: 0 8px;
-          background: #1976d2;
-          color: white;
-          border: none;
-          border-radius: 6px;
+          padding: 6px 10px;
           cursor: pointer;
         }
-
         input[type="range"] {
-          width: 80%;
-          margin-top: 12px;
-        }
-
-        .status {
-          font-size: 14px;
-          color: #555;
-          margin-top: 10px;
+          width: 100px;
         }
       `;
 
       render() {
         return html`
-          <h3>🎛 Web Audio UI</h3>
-          <div>
+          <div class="player">
             <button @click=${this._togglePlay}>
-              ${this.isPlaying ? '⏸ Pause' : '▶️ Play'}
+              ${this.isPlaying ? '⏸️ Pause' : '▶️ Play'}
             </button>
-
             <button @click=${this._toggleMute}>
-              ${this.isMuted ? '🔇 Unmute' : '🔊 Mute'}
+              ${this.isMuted ? '🔇' : '🔊'}
             </button>
-          </div>
-
-          <input
-            type="range"
-            min="0"
-            max="100"
-            .value=${this.volume}
-            @input=${this._changeVolume}
-            ?disabled=${this.isMuted}
-          />
-
-          <div class="status">
-            ${this.isPlaying ? '▶️ Playing' : '⏸ Paused'} |
-            Volume: ${this.volume} ${this.isMuted ? '(Muted)' : ''}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              .value=${this.isMuted ? 0 : this.volume}
+              @input=${this._changeVolume}
+            />
           </div>
         `;
       }
 
       _togglePlay() {
         this.isPlaying = !this.isPlaying;
-        console.log('🎬 Play toggled:', this.isPlaying);
-      }
-
-      _toggleMute() {
-        this.isMuted = !this.isMuted;
-        this.volume = this.isMuted ? 0 : 50;
-
-        this.dispatchEvent(new CustomEvent('mute-toggled', {
-          detail: { muted: this.isMuted },
+        this.dispatchEvent(new CustomEvent('play-toggled', {
+          detail: { isPlaying: this.isPlaying },
           bubbles: true,
           composed: true
         }));
       }
 
-      _changeVolume(e) {
-        const val = parseInt(e.target.value);
-        this.volume = val;
+      _toggleMute() {
+        this.isMuted = !this.isMuted;
+        this.dispatchEvent(new CustomEvent('mute-toggled', {
+          detail: { isMuted: this.isMuted },
+          bubbles: true,
+          composed: true
+        }));
+        if (this.isMuted) this.volume = 0;
+        this.requestUpdate();
+      }
 
+      _changeVolume(e) {
+        this.volume = Number(e.target.value);
+        this.isMuted = this.volume === 0;
         this.dispatchEvent(new CustomEvent('volume-changed', {
           detail: { volume: this.volume },
           bubbles: true,
@@ -124,8 +89,32 @@
 
     customElements.define('web-audio-stream-element', WebAudioStreamElement);
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
+  <h3>Web Audio Stream Element</h3>
   <web-audio-stream-element></web-audio-stream-element>
+
+  <script>
+    const audioComponent = document.querySelector('web-audio-stream-element');
+
+    audioComponent.addEventListener('play-toggled', e => {
+      console.log('[Audio UI] Play toggled:', e.detail);
+    });
+
+    audioComponent.addEventListener('mute-toggled', e => {
+      console.log('[Audio UI] Mute toggled:', e.detail);
+    });
+
+    audioComponent.addEventListener('volume-changed', e => {
+      console.log('[Audio UI] Volume changed:', e.detail);
+    });
+  </script>
 </body>
 </html>

@@ -1,37 +1,25 @@
-<!-- llm-logger.html -->
-<!--
-  ✅ Task 4: LLM Prompt Controller
-  Component: <llm-logger>
-  Description:
-  - Input + "Generate" button
-  - Simulates LLM delay
-  - Shows fake response
-  - Logs prompt/response
--->
-
+<!-- llm-prompt-controller.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LLM Logger</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      padding-top: 60px;
-    }
-  </style>
-
+  <title>LLM Prompt Controller</title>
   <script type="module">
-    import { LitElement, html, css } from 'https://cdn.skypack.dev/lit';
+    import { LitElement, html, css } from 'https://unpkg.com/lit@2.5.0/index.js?module';
 
-    class LlmLogger extends LitElement {
+    // Mock Logger utility (simulating @formd-ui-workspace/logger)
+    class Logger {
+      static log(entry) {
+        console.log('[Logger] Prompt:', entry.prompt);
+        console.log('[Logger] Response:', entry.response);
+      }
+    }
+
+    class LLMPromptController extends LitElement {
       static properties = {
-        prompt: { type: String },
-        response: { type: String },
-        loading: { type: Boolean }
+        prompt: { type: String, state: true },
+        response: { type: String, state: true },
+        loading: { type: Boolean, state: true }
       };
 
       constructor() {
@@ -42,109 +30,73 @@
       }
 
       static styles = css`
-        :host {
-          display: block;
-          background: white;
-          padding: 20px;
-          border-radius: 10px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          max-width: 480px;
-          width: 100%;
+        .input-area {
+          margin-bottom: 10px;
         }
-
-        h3 {
-          margin-top: 0;
+        input {
+          width: 300px;
+          padding: 5px;
         }
-
-        input[type="text"] {
-          width: 100%;
-          padding: 10px;
-          font-size: 14px;
-          border: 2px solid #ccc;
-          border-radius: 6px;
-          margin-bottom: 12px;
-          box-sizing: border-box;
-        }
-
         button {
-          padding: 8px 16px;
-          font-size: 14px;
-          background: #1976d2;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
+          padding: 5px 10px;
+          margin-left: 10px;
         }
-
-        button:disabled {
-          background: #aaa;
-        }
-
         .response {
-          margin-top: 16px;
-          font-family: monospace;
-          background: #f9f9f9;
-          padding: 12px;
-          border-radius: 6px;
-          white-space: pre-wrap;
-          font-size: 14px;
+          margin-top: 15px;
+          font-weight: bold;
         }
       `;
 
       render() {
         return html`
-          <h3>🤖 LLM Prompt Logger</h3>
-
-          <input
-            type="text"
-            placeholder="Enter prompt..."
-            .value=${this.prompt}
-            @input=${e => this.prompt = e.target.value}
-          />
-
-          <button
-            @click=${this._generateResponse}
-            ?disabled=${this.loading || this.prompt.trim() === ''}
-          >
-            ${this.loading ? 'Generating...' : 'Generate'}
-          </button>
-
-          ${this.response
-            ? html`<div class="response">${this.response}</div>`
-            : ''}
+          <div class="input-area">
+            <input
+              type="text"
+              placeholder="Enter prompt"
+              .value=${this.prompt}
+              @input=${this._onInput}
+            />
+            <button @click=${this._generate} ?disabled=${this.loading}>Generate</button>
+          </div>
+          ${this.loading ? html`<div>Loading response...</div>` : ''}
+          ${this.response ? html`<div class="response">Response: ${this.response}</div>` : ''}
         `;
       }
 
-      async _generateResponse() {
-        try {
-          this.loading = true;
-          this.response = '';
+      _onInput(e) {
+        this.prompt = e.target.value;
+      }
 
-          const input = this.prompt.trim();
-          console.log("📤 Prompt sent:", input);
-
-          // Simulate 2s LLM delay
-          await new Promise(r => setTimeout(r, 2000));
-
-          const mockResponse = `LLM Response: "${input.toUpperCase()}"`;
-          this.response = mockResponse;
-
-          console.log("✅ LLM Response:", {
-            prompt: input,
-            response: mockResponse
-          });
-        } catch (err) {
-          console.error("❌ Error generating response:", err);
-        } finally {
-          this.loading = false;
+      async _generate() {
+        if (!this.prompt.trim()) {
+          alert('Prompt cannot be empty');
+          return;
         }
+
+        this.loading = true;
+        this.response = '';
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const mockResponse = `Mock response to: "${this.prompt}"`;
+        this.response = mockResponse;
+        this.loading = false;
+
+        Logger.log({ prompt: this.prompt, response: this.response });
       }
     }
 
-    customElements.define('llm-logger', LlmLogger);
+    customElements.define('llm-prompt-controller', LLMPromptController);
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
-  <llm-logger></llm-logger>
+  <h3>Mock LLM Interaction Logger</h3>
+  <llm-prompt-controller></llm-prompt-controller>
 </body>
 </html>

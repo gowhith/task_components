@@ -1,9 +1,0 @@
-{
-    "formd_table": {
-      "columns": {
-        "issuer_name": "VARCHAR(255)",
-        "amount_raised": "INT",
-        "filing_date": "DATE"
-      }
-    }
-  }
