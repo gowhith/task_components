@@ -54,32 +54,21 @@ This repository simulates a production-ready backend system composed of five mic
 
 | Phase | Task | File | Approach |
 |-------|------|------|----------|
-
-| **1. Form-D Ingestion Service (Python)** 
-| Simulate Data Ingestion | `formd_ingestor_simulation.py` | ✅ Class-Based Mini Pipeline |
-| Edge Case Cleaner | `column_cleaner.py` | ✅ Rule-Based Mapping Function |
-| Schema Extension | `generate_sql.py` + `mock_schema.json` | ✅ SQLAlchemy + Jinja2 Fallback |
-
-| **2. Audio Management Service (Rust)** 
-| gRPC Client Simulation | `grpc_simulation.rs` | ✅ Manual Struct Simulation |
-| Audio Metadata Calc | `audio_metadata.rs` | ✅ File Metadata using PathBuf |
-| Audio Chunking | `mock_audio_stream.rs` | ✅ Slice from Vec<f32> |
-
-| **3. Company Profile Analysis (Rust)** 
-| Section Discovery | `section_discovery_vec.rs` | ✅ Vec<SectionData> (Per Spec) |
-| Dummy Section | `dummy_section_builder.rs` | ✅ Builder Pattern |
-| SQL Interpolation | `template_engine.rs` | ✅ Mini Template Engine (w/ Cache) |
-
-| **4. Text Generation Service (Python)**       
-| LLM Request/Response Simulation | `llm_simulation.py` | ✅ Enum-Based Pydantic Models |
-| Dummy LLM Provider | `dummy_llm_provider.py` | ✅ Protocol-based Typing (PEP 544) |
-| Config History | `in_memory_config_adapter.py` | ✅ Circular Queue (`deque(maxlen=5)`) |
-
-| **5. Text-to-Speech (TTS) Service (Python)** 
-| TTS gRPC Simulation | `simulate_tts_client.py` | ✅ `.proto` → `tts_pb2.py` (grpcio-tools) |
-| Add `volume_boost` Param | `speech_params.py` | ✅ Pydantic Model |
-| Audio Format Resolution | `audio_format_resolver.py` | ✅ Dict-Based Format Mapping |
-
+| **1. Form-D Ingestion Service (Python)** | Simulate Data Ingestion | `formd_ingestor_simulation.py` | ✅ Class-Based Mini Pipeline |
+|  | Edge Case Cleaner | `column_cleaner.py` | ✅ Rule-Based Mapping Function |
+|  | Schema Extension | `generate_sql.py` + `mock_schema.json` | ✅ SQLAlchemy + Jinja2 Fallback |
+| **2. Audio Management Service (Rust)** | gRPC Client Simulation | `grpc_simulation.rs` | ✅ Manual Struct Simulation |
+|  | Audio Metadata Calc | `audio_metadata.rs` | ✅ File Metadata using PathBuf |
+|  | Audio Chunking | `mock_audio_stream.rs` | ✅ Slice from Vec<f32> |
+| **3. Company Profile Analysis (Rust)** | Section Discovery | `section_discovery_vec.rs` | ✅ Vec<SectionData> (Per Spec) |
+|  | Dummy Section | `dummy_section_builder.rs` | ✅ Builder Pattern |
+|  | SQL Interpolation | `template_engine.rs` | ✅ Mini Template Engine (w/ Cache) |
+| **4. Text Generation Service (Python)** | LLM Request/Response Simulation | `llm_simulation.py` | ✅ Enum-Based Pydantic Models |
+|  | Dummy LLM Provider | `dummy_llm_provider.py` | ✅ Protocol-based Typing (PEP 544) |
+|  | Config History | `in_memory_config_adapter.py` | ✅ Circular Queue (`deque(maxlen=5)`) |
+| **5. Text-to-Speech (TTS) Service (Python)** | TTS gRPC Simulation | `simulate_tts_client.py` | ✅ `.proto` → `tts_pb2.py` (grpcio-tools) |
+|  | Add `volume_boost` Param | `speech_params.py` | ✅ Pydantic Model |
+|  | Audio Format Resolution | `audio_format_resolver.py` | ✅ Dict-Based Format Mapping |
 ---
 
 ## ✅ Architectural Patterns Used
