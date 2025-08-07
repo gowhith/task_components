@@ -52,8 +52,8 @@ This repository simulates a production-ready backend system composed of five mic
 
 ## 📦 Overview of Backend Phases & Approaches
 
-                        | Phase | Task | File | Approach |
-                        |-------|------|------|----------|
+| Phase | Task | File | Approach |
+|-------|------|------|----------|
 
 | **1. Form-D Ingestion Service (Python)** 
 | Simulate Data Ingestion | `formd_ingestor_simulation.py` | ✅ Class-Based Mini Pipeline |
